@@ -47,6 +47,8 @@ async def start(ctx):
 
             choice_file_path = None
             while not choice_file_path:
+                if not file_paths:
+                    break
                 tmp_path = random.choice(file_paths)
                 file_paths.remove(tmp_path)
                 file_size = os.path.getsize(tmp_path)
@@ -55,9 +57,13 @@ async def start(ctx):
                 else:
                     choice_file_path = tmp_path
 
-            await ctx.send(file=discord.File(choice_file_path))
-            tasks = [asyncio.sleep(INTERVAL), stop_event.wait()]
-            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED) 
+            if not choice_file_path:
+                await ctx.send(file=discord.File(choice_file_path))
+
+                try:
+                    await asyncio.wait_for(asyncio.sleep(INTERVAL), stop_event.wait())
+                except asyncio.TimeoutError:
+                    continue
 
         stop_event = None
         await ctx.send("画像投稿を終了しました。")
