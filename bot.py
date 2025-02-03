@@ -57,13 +57,15 @@ async def start(ctx):
                 else:
                     choice_file_path = tmp_path
 
-            if not choice_file_path:
+            if choice_file_path:
                 await ctx.send(file=discord.File(choice_file_path))
-
-                try:
-                    await asyncio.wait_for(asyncio.sleep(INTERVAL), stop_event.wait())
-                except asyncio.TimeoutError:
-                    continue
+                tasks = [
+                    asyncio.create_task(asyncio.sleep(INTERVAL)),
+                    asyncio.create_task(stop_event.wait())
+                ]
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                for task in pending:
+                    task.cancel()
 
         stop_event = None
         await ctx.send("画像投稿を終了しました。")
